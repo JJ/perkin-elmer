@@ -1,5 +1,5 @@
 # from https://css-tricks.com/snippets/css/simple-and-nice-blockquote-styling/
-
+@import url('https://fonts.googleapis.com/css?family=Prosto+One&display=swap');
 blockquote {
   background: #f9f9f9;
   border-left: 10px solid #ccc;
@@ -18,9 +18,9 @@ blockquote:before {
 
 section[data-background] h1 { 
        background-color:rgba(233,223,213,0.6);
-       padding: 50px;
+       padding: 30px;
        margin: 20px;
-       border-radius: 30px
+       border-radius: 20px
 }
 
 h1 strong {
