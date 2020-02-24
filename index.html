@@ -117,10 +117,87 @@
           <h1>You need to find <em>the highest</em> one</h1>
         </section>
 
+        <!-- Evolutionary algorithms -->
+        <section>
+	  <section><h1>EAs are optimization methods</h1>
+	    <h2 class='fragment'>Optimize this</h2>
+	    <pre class='fragment'><code>sub road-royale ( @χ ) {
+    @χ.rotor(4).map( {so @_.all + so @_.none}).sum;
+}
+	    </code></pre>
+	    <aside class='notes'>It can optimize (or search if it can be formulated in terms of distances) any function. This function is often used because it's simple but it's also got some "neutral" changes: it increases fitness only when several things changes at the same time. Also includes junctions, and cool stuff.</aside>
+	  </section>
+	  
+          <section>
+	    <h2>Evolutionary algorithms evolve <strong>encoded</strong> solutions in populations</h2>
+	    <pre><code>    my @population = ( Bool.pick() xx $length ) xx $population-size;
+            </code></pre>
+
+<aside class='notes'>Chromosomes are simply lists of random Bools, or bits. Other data structures are possible, but this works well for demos and many benchmark functions.</aside>
+          </section>
+
+          <section><h2>... through <strong>evaluation</strong>...</h2>
+  <pre><code>my $evaluated = @population.unique.map( { @$_ => road-royale( @$_ ) } ).Mix;</code></pre>
+<aside class='notes'>Mixes are immutable, so we're good here, but we need them to be unique or it will add the weights. Here's an interesting thing that I haven't seen in any other language; I'm using elements and its "weight" as score. This is going to be useful later on. Also, I'm using a cache so that I don't evaluate twice the same thing. It's not important at the beginning, but by the end of the simulation lots of values are going to be the same.</aside>
+
+          </section>
+
+          <section>
+  <h2>... to <strong>select</strong> the best</h2>
+<pre><code>          my @reproductive-pool = $evaluated.roll( $population-size );</code></pre>
+<aside class='notes'>Since it's a Mix, just a roll takes care of
+  selecting with a probability thats related to fitness</aside>
+          </section>
+
+          <section><h1>... and interchange bits ... </h1>
+<pre><code>    my @pairs = @x Z @y;
+    my $xover1point = @x.keys.pick;
+    my $xover2point = ($xover1point^..@x.elems).pick;
+    my @crossed =  gather for @pairs.kv -> $index, @value {
+        take ( ($xover1point <= $index <= $xover2point) ?? @value.reverse !!
+            @value );
+    }
+    return ([Z] @crossed).Slip;</code></pre>
+
+					  <pre class='fragment'><code>@population.append:
+  @reproductive-pool.pick( $population-size / 5 ).rotor(2)
+    .map( { xover( @$_[0], @$_[1] ) } );</code></pre>
+					  <aside class='notes'>These are selected randomly from all members in
+  the population. Since the list is already randomized, we can just pick them by pairs. Also, 1/5 of the population is doing this. There's something called the rule of fifths, which I'm not going to bore you with, but it means that what we're doing is just right.</aside></section>
+
+          <section><h1>... which mutate ...</h1>
+<pre><code>sub mutate ( @x is copy ) {
+    @x[ (^@x.elems).pick ] ?^= True;
+    @x;
+}</code></pre>
+
+<pre class='fragment'><code>@population.append:
+    @reproductive-pool.pick( $population-size*3/5).map( {mutate(@$_)} );
+</code></pre>
+    <aside class='notes'>It's a single bitflip of an element randomly
+  chosen, which uses xor so that we don't need to store the mutation point in a variable. We again use map to process the population, functional style.</aside>
+          </section>
+
+          <section><h1>Repeat until solution is <strong>found</strong></h1>
+  <pre><code>my $best-so-far = $evaluated.values.max;
+@best = $evaluated.grep( *.value == $best-so-far );
+if any( $evaluated.values ) == $length/4 {
+    last;
+}  </code></pre>  <aside class='notes'>We use junctions, so that we don't really have to sort the population. We also filter the best to add it to the next generation. Or until you get tired, whatever happens
+    first.</aside>
+          </section>
+
+          <section><h1>We ♥ just the way you are</h1>
+  <pre><code>@population.append: @reproductive-pool.pick( $population-size / 5 );</code></pre>
+  <aside class='notes'>This is just random, so it might include or not the best.</aside>
+          </section>
+        </section>
+
+
 	<!-- Doing neuroevolution -->
 
 	<section>
-	  <section><h1>Let's do that</h1></section>
+	  <section><h1>Let's evolve brains</h1></section>
 
 	  <section><h1>Neural nets as data structures</h1>
 	    <aside class='notes'>It's essential to know really what we are going to evolve, and it's not trivial to do that.</aside>
@@ -154,6 +231,8 @@
      // - https://github.com/hakimel/reveal.js#dependencies
      Reveal.initialize({
        hash: true,
+       history: true,
+       width: '99%',
        dependencies: [
 	 { src: 'plugin/highlight/highlight.js' },
 	 { src: 'plugin/notes/notes.js', async: true }
